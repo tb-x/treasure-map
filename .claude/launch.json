@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "treasure-map",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5213"],
+      "port": 5213
+    }
+  ]
+}
