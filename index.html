@@ -17,7 +17,7 @@
 <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" crossorigin="anonymous"></script>
 <style>
-  /* Layout: maker mode is a settings card above a column of A4 sheet previews (each prints as one wordless page: board, arrow-and-sum cards, answer QR); answer mode (the QR's #n=…&m=… link) is one full-screen board where a marker walks to the treasure, with the steps beside it on wide screens. */
+  /* Layout: maker mode is a settings card above a column of A4 sheet previews (each prints as one wordless page: board, arrow-and-sum cards, answer QR); answer mode (the QR's #n=…&m=… link) is the same sheet solved: the path drawn to the treasure, every box filled in, the cards below the board or beside it on wide screens. */
   :root{
     --ink:#1f2a44; --sea:#2b6f8f; --sand:#f6ecd2; --sand-dark:#e3cf9f; --brown:#8a6a3a;
     --go:#2fa34a; --gold:#f2b632; --red:#e0533d;
@@ -93,42 +93,35 @@
   .steps.big .arr,.steps.big .box{width:15mm;height:15mm}
 
   /* ---------- answer ---------- */
-  #answer{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  #answer{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
     padding:calc(64px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px))
             calc(16px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px))}
-  #ans-wrap{position:relative;width:min(94vw,62vh);aspect-ratio:1;flex:none}
-  #ans-board{width:100%;height:100%;display:block;border-radius:10px;background:var(--sand);box-shadow:0 6px 0 rgba(0,0,0,.2)}
-  #ans-board .cells{fill:#fffaf0}
-  #ans-board .l1,#ans-board .l5{stroke:var(--brown);stroke-width:.3}
-  #ans-board .l5{stroke-width:.7}
-  #ans-board .lbl{font:bold 4.6px Verdana,Tahoma,sans-serif;fill:var(--brown);text-anchor:middle;dominant-baseline:central}
-  .trail{fill:none;stroke:var(--red);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  #mk circle{fill:var(--red);stroke:#fff;stroke-width:1.2}
-  #prize .spot{fill:var(--gold)}
-  .pop{transform-box:fill-box;transform-origin:50% 50%;animation:pop .7s cubic-bezier(.3,1.7,.5,1) both}
-  @keyframes pop{from{transform:scale(0) rotate(-30deg)}to{transform:none}}
-  #play{position:absolute;inset:0;margin:auto;width:30%;height:30%;border-radius:50%;border:0;background:var(--go);padding:0;
-    box-shadow:0 7px 0 #1f7a35,0 0 0 9px rgba(255,255,255,.65);display:grid;place-items:center;animation:pulse 1.2s ease-in-out infinite}
-  #play svg{width:46%;height:46%;margin-left:9%}
-  @keyframes pulse{50%{transform:scale(1.07)}}
-  #side{display:flex;flex-direction:column;align-items:center;gap:16px}
-  #chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:94vw}
-  .chip{display:flex;align-items:center;gap:4px;padding:6px 12px 6px 8px;border-radius:12px;background:#fff;
-    font:bold 24px Verdana,Tahoma,sans-serif;box-shadow:0 3px 0 rgba(0,0,0,.2);transition:background .2s,opacity .2s}
-  .chip svg{width:28px;height:28px;fill:var(--ink)}
-  .chip.on{background:var(--gold)}
-  .chip.done{opacity:.55}
-  #result{display:flex;align-items:center;gap:12px;font-family:var(--title);font-size:clamp(56px,13vmin,110px);line-height:1;color:#fff;
-    text-shadow:0 5px 0 rgba(0,0,0,.25)}
-  #result svg{width:1em;height:1em}
-  #again{width:64px;height:64px;border-radius:50%;border:0;background:var(--sand);box-shadow:0 4px 0 rgba(0,0,0,.2);padding:0;
-    display:grid;place-items:center}
-  #again svg{width:34px;height:34px}
-  #make{color:#fff;font-size:13px;opacity:.8}
+  .solved{width:min(100%,640px);background:#fff;border-radius:14px;padding:12px;box-shadow:0 6px 0 rgba(0,0,0,.2);
+    display:flex;flex-direction:column;gap:14px}
+  .solved .board{width:100%;height:auto;aspect-ratio:1}
+  .solved .spot{fill:var(--gold)}
+  .solved .path{fill:none;stroke:var(--red);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .solved .head{fill:var(--red)}
+  .solved g.no circle{fill:var(--red);stroke:#fff;stroke-width:.6}
+  .solved g.no text{fill:#fff;font:bold 3.4px Verdana,Tahoma,sans-serif;text-anchor:middle;dominant-baseline:central}
+  .solved .step{position:relative}
+  .solved span.no{position:absolute;top:-8px;left:-8px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;
+    font:bold 12px/22px Verdana,Tahoma,sans-serif;text-align:center;border:2px solid #fff}
+  .side{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .found{display:flex;align-items:center;gap:10px;font-family:var(--title);font-size:44px;line-height:1;padding-top:4px}
+  .found svg{width:1em;height:1em}
+  .solved .steps{width:100%;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+  .solved .step{border-width:2px;border-radius:10px;padding:8px 4px;gap:6px}
+  .solved .sum{font-size:15px}
+  .solved .sum.long{font-size:12px}
+  .solved .arr,.solved .box{width:36px;height:36px}
+  .solved .box{border-width:2px;border-radius:6px;display:grid;place-items:center;font:bold 22px Verdana,Tahoma,sans-serif;color:var(--red)}
+  #make{color:var(--sea);font-size:13px}
   @media (min-aspect-ratio: 5/4){
-    #answer{flex-direction:row;gap:4vw;padding-top:calc(16px + env(safe-area-inset-top,0px))}
-    #ans-wrap{width:min(58vw,88vh)}
-    #side{max-width:34vw}
+    #answer{padding-top:calc(16px + env(safe-area-inset-top,0px));padding-left:calc(64px + env(safe-area-inset-left,0px))}
+    .solved{width:auto;flex-direction:row;align-items:flex-start}
+    .solved .board{width:min(54vw,calc(100dvh - 56px))}
+    .side{width:min(36vw,460px)}
   }
 
   body.answering #maker, body:not(.answering) #answer{display:none}
@@ -169,18 +162,7 @@
   <div id="pages"></div>
 </main>
 
-<main id="answer">
-  <div id="ans-wrap">
-    <div id="ans-board"></div>
-    <button id="play" aria-label="Show the way"><svg viewBox="0 0 24 24"><path d="M5 3l16 9-16 9z" fill="#fff"/></svg></button>
-  </div>
-  <div id="side">
-    <div id="chips"></div>
-    <div id="result" hidden></div>
-    <button id="again" aria-label="Again" hidden><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="#1f2a44" stroke-width="3" stroke-linecap="round"/><path d="M20 3v6h-6" fill="none" stroke="#1f2a44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <a id="make" href="./">Make new maps</a>
-  </div>
-</main>
+<main id="answer"><div id="solved" class="solved"></div></main>
 
 <script>
 /* ======== tuning ======== */
@@ -194,12 +176,11 @@ const SAME_DIR_WEIGHT = 0.35;               // how likely the next arrow repeats
 const BACK_DIR_WEIGHT = 0.6;                // how likely it points straight back
 const MIN_TREASURE_DIST = 3;                // squares (across + down) between the start and the treasure
 const PUBLIC_URL = 'https://tb-x.github.io/treasure-map/';   // where the QR points when the maker isn't on GitHub Pages
-const WALK_MS = 260, STEP_PAUSE_MS = 350;   // answer page: time per square, pause between arrows
+const ARROW_GAP = 5.2;                      // answer page: how far short of the treasure's centre the line's arrowhead stops (a square is 10)
 
 /* ======== small helpers ======== */
 const $ = (id) => document.getElementById(id);
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
 const BACK = { U: 'D', D: 'U', L: 'R', R: 'L' };
@@ -291,20 +272,41 @@ function makeRiddle(s) {
 }
 
 /* ======== link in the QR code ======== */
-const riddleHash = (r) => `#n=${r.n}&s=${r.start[0]}.${r.start[1]}&m=${r.steps.map((s) => s.d + s.k).join('')}`;
+// #n=10&s=0.9&m=U5-3,R7+8-11,… : board size, start square (x.y), then each card's arrow and sum
+const sumCode = (terms) => terms.map((t, i) => (i ? (t < 0 ? '-' : '+') + Math.abs(t) : String(t))).join('');
+const riddleHash = (r) => `#n=${r.n}&s=${r.start[0]}.${r.start[1]}&m=${r.steps.map((s, i) => s.d + sumCode(r.sums[i])).join(',')}`;
 const answerBase = () => (location.hostname.endsWith('github.io') ? location.origin + location.pathname : PUBLIC_URL);
 
 function parseHash() {
-  const p = new URLSearchParams(location.hash.slice(1));
-  const n = +p.get('n'), s = (p.get('s') || '').split('.').map(Number);
-  const steps = [...(p.get('m') || '').matchAll(/([UDLR])(\d+)/g)].map((m) => ({ d: m[1], k: +m[2] }));
+  const p = {};
+  try {
+    for (const kv of location.hash.slice(1).split('&')) {
+      const i = kv.indexOf('=');
+      if (i > 0) p[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
+    }
+  } catch { return null; }
+  const n = +p.n, s = (p.s || '').split('.').map(Number), m = p.m || '';
+  let steps = [], sums = null;
+  if (m.includes(',')) {
+    sums = [];
+    for (const part of m.split(',')) {
+      const mm = /^([UDLR])(\d+(?:[+-]\d+)*)$/.exec(part);
+      if (!mm) return null;
+      const terms = mm[2].match(/[+-]?\d+/g).map(Number);
+      sums.push(terms);
+      steps.push({ d: mm[1], k: terms.reduce((a, b) => a + b, 0) });
+    }
+  } else {   // the first links (15 Oct 2026) held only arrows and answers: U2R4…
+    steps = [...m.matchAll(/([UDLR])(\d+)/g)].map((x) => ({ d: x[1], k: +x[2] }));
+  }
   if (!(n >= SIZE_MIN && n <= SIZE_MAX) || s.length !== 2 || !steps.length) return null;
   let [x, y] = s;
   for (const st of [{ d: 'U', k: 0 }, ...steps]) {
+    if (st.k < 0) return null;
     x += DIRS[st.d][0] * st.k; y += DIRS[st.d][1] * st.k;
     if (!(x >= 0 && y >= 0 && x < n && y < n)) return null;
   }
-  return { n, start: s, steps, end: [x, y] };
+  return { n, start: s, steps, sums, end: [x, y] };
 }
 
 function qrSvg(text) {
@@ -341,12 +343,15 @@ function boardSvg(n, start, cls, extra = '') {
 /* ======== maker: sheets ======== */
 let riddles = [];
 
+// one arrow card; the answer page fills the box in
+function stepCard(st, terms, answer = '', no = '') {
+  const t = terms ? sumText(terms) + ' =' : '';
+  return `<li class="step">${no ? `<span class="no">${no}</span>` : ''}${t ? `<span class="sum${t.length > 14 ? ' long' : ''}">${t}</span>` : ''}
+    <span class="row">${arrowSvg(st.d)}<span class="box">${answer}</span></span></li>`;
+}
+
 function sheetHtml(r) {
-  const cards = r.steps.map((st, i) => {
-    const t = sumText(r.sums[i]);
-    return `<li class="step"><span class="sum${t.length > 12 ? ' long' : ''}">${t} =</span>
-      <span class="row">${arrowSvg(st.d)}<span class="box"></span></span></li>`;
-  }).join('');
+  const cards = r.steps.map((st, i) => stepCard(st, r.sums[i])).join('');
   const hash = riddleHash(r);
   return `<div class="sheet">
     <div class="top">${boardSvg(r.n, r.start, 'board')}
@@ -412,87 +417,29 @@ function startMaker() {
 }
 
 /* ======== answer page ======== */
-let ac = null;
-function audio() {
-  try {
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-    if (ac.state === 'suspended') ac.resume();
-  } catch { ac = null; }
-  return ac;
-}
-function tone(f, t0, dur, type = 'triangle', vol = 0.2) {
-  if (!ac) return;
-  const o = ac.createOscillator(), g = ac.createGain();
-  o.type = type; o.frequency.value = f;
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(g).connect(ac.destination);
-  o.start(t0); o.stop(t0 + dur + 0.05);
-}
-const blip = (count) => ac && tone(392 * 2 ** ((count - 1) * 2 / 12), ac.currentTime, 0.14);   // rises with each square counted
-const fanfare = () => ac && [523, 659, 784, 1047].forEach((f, i) => tone(f, ac.currentTime + i * 0.13, i === 3 ? 0.6 : 0.2, 'square', 0.12));
-
-let walking = false;
-
+// the sheet solved: every box filled in, and a line along the path with an arrowhead at the treasure
 function showAnswer(r) {
   document.body.classList.add('answering');
   const [ex, ey] = r.end;
-  $('ans-board').innerHTML = boardSvg(r.n, r.start, 'aboard', `
-    <polyline class="trail" points=""/>
-    <g id="prize" hidden><rect class="spot" x="${M + ex * 10 + .6}" y="${M + ey * 10 + .6}" width="8.8" height="8.8" rx="1.5"/>
-      <g transform="translate(${cx(ex) - 4.6} ${cx(ey) - 4.8}) scale(${9.2 / 24})"><g class="pop">${CHEST}</g></g></g>
-    <g id="mk" style="transition:transform ${WALK_MS * 0.85}ms ease-in-out"><circle r="3.3"/></g>`);
-  $('chips').innerHTML = r.steps.map((s) => `<span class="chip">${arrowSvg(s.d)}${s.k}</span>`).join('');
-  $('result').innerHTML = `${chestSvg('')}<span>${cellName(r.end)}</span>`;
-  resetWalk(r);
-  $('play').onclick = () => { audio(); $('play').hidden = true; walk(r); };
-  $('again').onclick = () => { audio(); walk(r); };
-}
-
-function placeMarker(x, y) { document.getElementById('mk').style.transform = `translate(${cx(x)}px,${cx(y)}px)`; }
-
-function resetWalk(r) {
-  document.querySelector('.trail').setAttribute('points', '');
-  document.getElementById('prize').setAttribute('hidden', '');
-  for (const c of $('chips').children) c.className = 'chip';
-  $('result').hidden = true;
-  $('again').hidden = true;
-  const mk = document.getElementById('mk');
-  mk.removeAttribute('hidden');
-  mk.style.transitionDuration = '0ms';
-  placeMarker(...r.start);
-  mk.getBoundingClientRect();   // apply the jump before the transition comes back
-  mk.style.transitionDuration = `${WALK_MS * 0.85}ms`;
-}
-
-async function walk(r) {
-  if (walking) return;
-  walking = true;
-  resetWalk(r);
-  await sleep(300);
   let [x, y] = r.start;
-  const pts = [[cx(x), cx(y)]], trail = document.querySelector('.trail'), chips = $('chips').children;
-  for (let i = 0; i < r.steps.length; i++) {
-    const st = r.steps[i];
-    chips[i].classList.add('on');
-    for (let c = 1; c <= st.k; c++) {
-      x += DIRS[st.d][0]; y += DIRS[st.d][1];
-      placeMarker(x, y);
-      blip(c);
-      await sleep(WALK_MS);
-      pts.push([cx(x), cx(y)]);
-      trail.setAttribute('points', pts.map((p) => p.join(',')).join(' '));
-    }
-    chips[i].className = 'chip done';
-    await sleep(STEP_PAUSE_MS);
-  }
-  document.getElementById('mk').setAttribute('hidden', '');   // so the chest shows
-  document.getElementById('prize').removeAttribute('hidden');
-  $('result').hidden = false;
-  $('again').hidden = false;
-  fanfare();
-  walking = false;
+  const pts = [[cx(x), cx(y)]];
+  for (const st of r.steps) { x += DIRS[st.d][0] * st.k; y += DIRS[st.d][1] * st.k; pts.push([cx(x), cx(y)]); }
+  const last = DIRS[r.steps[r.steps.length - 1].d];
+  const tip = [cx(ex) - last[0] * ARROW_GAP, cx(ey) - last[1] * ARROW_GAP];   // stop at the chest's edge
+  const line = [...pts.slice(0, -1), tip].map((p) => p.join(',')).join(' ');
+  // where each move ends, numbered like its card, so a path that doubles back can still be followed
+  const turns = pts.slice(1, -1).map(([a, b], i) => `<g class="no" transform="translate(${a} ${b})"><circle r="2.7"/><text>${i + 1}</text></g>`).join('');
+  const extra = `<defs><marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.4" markerHeight="3.4" orient="auto">
+      <path class="head" d="M0 0 10 5 0 10z"/></marker></defs>
+    <rect class="spot" x="${M + ex * 10 + .6}" y="${M + ey * 10 + .6}" width="8.8" height="8.8" rx="1.5"/>
+    <g transform="translate(${cx(ex) - 4.2} ${cx(ey) - 4.4}) scale(${8.4 / 24})">${CHEST}</g>
+    <polyline class="path" points="${line}" marker-end="url(#head)"/>${turns}`;
+  $('solved').innerHTML = `${boardSvg(r.n, r.start, 'board', extra)}
+    <div class="side">
+      <div class="found">${chestSvg('')}<span>${cellName(r.end)}</span></div>
+      <ol class="steps">${r.steps.map((st, i) => stepCard(st, r.sums && r.sums[i], st.k, i + 1)).join('')}</ol>
+      <a id="make" href="./">Make new maps</a>
+    </div>`;
 }
 
 /* ======== start ======== */

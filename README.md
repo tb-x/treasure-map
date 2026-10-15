@@ -15,8 +15,9 @@ Live at **https://tb-x.github.io/treasure-map/**
 - Take the cards in reading order: left to right, then the next row.
 - Solve the sum on the card, write the answer in the empty box, and move that many squares the way the arrow points.
 - When the cards run out, the square you're on hides the treasure. Mark it, or say its letter and number (like F3).
-- Scan the QR code next to the chest. Tap the green play button and a marker walks the path square by
-  square (with a little beep for each one), then the chest appears with its square's name.
+- Scan the QR code next to the chest. The answer page shows the same board and cards, solved: every box
+  filled in, and a red line from the start along each move to an arrowhead pointing at the treasure. The end
+  of each move is marked with the card's number, so a path that doubles back can still be followed.
 
 Every move stays on the board and goes at least one square. The path can cross itself and can double back,
 but never just undoes the move before.
@@ -35,8 +36,9 @@ but never just undoes the move before.
   **Print** prints them. The settings are remembered in this browser.
 - Clicking a sheet's QR code on screen opens its answer page.
 
-The QR code holds the whole riddle in the link (board size, start and moves, e.g.
-`#n=10&s=0.9&m=U2R4U4L3D2R6U3L2`). Nothing is stored anywhere, so a printed sheet keeps working for as long
+The QR code holds the whole riddle in the link: board size, start square, and each card's arrow and sum, e.g.
+`#n=10&s=0.9&m=U5-3,R7+8-11,U13-9`. The first links (made on 15 Oct 2026) held only the arrows and answers,
+like `m=U2R4U4`; they still open, just without the sums. Nothing is stored anywhere, so a printed sheet keeps working for as long
 as this page is online. The QR always points at the published page on GitHub Pages, even when the maker runs
 on a local server.
 
@@ -68,4 +70,4 @@ Named constants at the top of the script in `index.html`:
 | `BACK_DIR_WEIGHT` | 0.6 | How likely an arrow points straight back |
 | `MIN_TREASURE_DIST` | 3 | Squares between the start and the treasure, at least |
 | `PUBLIC_URL` | `https://tb-x.github.io/treasure-map/` | Where the QR codes point |
-| `WALK_MS` / `STEP_PAUSE_MS` | 260 / 350 | Answer page: time per square and pause between arrows |
+| `ARROW_GAP` | 5.2 | Answer page: how far before the treasure's centre the line's arrowhead stops (a square is 10) |
