@@ -17,7 +17,7 @@
 <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" crossorigin="anonymous"></script>
 <style>
-  /* Layout: maker mode is a settings card above a column of A4 sheet previews (each prints as one wordless page: board, arrow-and-sum cards, answer QR); answer mode (the QR's #n=…&m=… link) is the same sheet solved: the path drawn to the treasure, every box filled in, the cards below the board or beside it on wide screens. */
+  /* Layout: maker mode is a settings card above a column of A4 sheet previews (each prints as one wordless page: board, arrow-and-sum cards, answer QR); answer mode (the QR's #n=…&m=… link) is the same sheet solved: the path drawn to the treasure, every box filled in, the cards below the board or beside it on wide screens; tapping a chest opens a full-screen reward. */
   :root{
     --ink:#1f2a44; --sea:#2b6f8f; --sand:#f6ecd2; --sand-dark:#e3cf9f; --brown:#8a6a3a;
     --go:#2fa34a; --gold:#f2b632; --red:#e0533d;
@@ -108,8 +108,36 @@
   .solved span.no{position:absolute;top:-8px;left:-8px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;
     font:bold 12px/22px Verdana,Tahoma,sans-serif;text-align:center;border:2px solid #fff}
   .side{display:flex;flex-direction:column;align-items:center;gap:12px}
-  .found{display:flex;align-items:center;gap:10px;font-family:var(--title);font-size:44px;line-height:1;padding-top:4px}
-  .found svg{width:1em;height:1em}
+  .found{display:flex;align-items:center;gap:10px;font-family:var(--title);font-size:44px;line-height:1;padding:4px 8px 0;
+    border:0;background:none;color:inherit;touch-action:manipulation}
+  .found svg{width:1.3em;height:1.3em;transform-origin:50% 90%;animation:wiggle 2.4s ease-in-out infinite}
+  @keyframes wiggle{0%,70%,100%{transform:none}76%{transform:rotate(-9deg)}82%{transform:rotate(8deg)}88%{transform:rotate(-5deg)}94%{transform:rotate(3deg)}}
+  .solved .treasure{cursor:pointer}
+
+  /* reward: a tapped chest opens full screen, rattles, flips its lid and something pops out */
+  #reward{position:fixed;inset:0;z-index:60;background:rgba(16,36,56,.84);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:1vmin;overflow:hidden;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  #reward .rays{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;opacity:0;
+    background:repeating-conic-gradient(rgba(242,182,50,.32) 0 10deg,transparent 10deg 20deg);
+    -webkit-mask:radial-gradient(closest-side,#000,transparent);mask:radial-gradient(closest-side,#000,transparent);transition:opacity .4s}
+  #reward.open .rays{opacity:1;animation:spin 16s linear infinite}
+  @keyframes spin{to{transform:rotate(1turn)}}
+  #reward .gift{position:relative;display:flex;flex-direction:column;align-items:center;gap:1vmin}
+  #reward .emoji{font-size:24vmin;line-height:1.1;opacity:0}
+  #reward .name{font-family:var(--title);font-size:clamp(28px,7vmin,56px);letter-spacing:1px;color:#fff;text-align:center;
+    text-shadow:0 4px 0 rgba(0,0,0,.3);padding:0 16px;opacity:0}
+  #reward.open .emoji{animation:rise .7s .1s cubic-bezier(.3,1.6,.5,1) forwards}
+  #reward.open .name{opacity:1;transition:opacity .3s .55s}
+  @keyframes rise{from{transform:translateY(22vmin) scale(.2);opacity:0}to{transform:none;opacity:1}}
+  #reward .bigchest{position:relative;width:min(46vmin,300px);height:auto;overflow:visible}
+  #reward.shake .bigchest{animation:shake .5s ease-in-out}
+  @keyframes shake{20%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}60%{transform:rotate(-4deg)}80%{transform:rotate(3deg)}}
+  #reward .lid{transform-box:view-box;transform-origin:2px 11px;transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+  #reward.open .lid{transform:translate(-1px,-4px) rotate(-24deg)}
+  #reward .bit{position:absolute;left:calc(50% - 3vmin);top:55%;font-size:6vmin;line-height:1;pointer-events:none;
+    animation:fly 1.2s ease-out forwards}
+  @keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+  @media (prefers-reduced-motion: reduce){ .found svg,#reward.open .rays{animation:none} }
   .solved .steps{width:100%;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
   .solved .step{border-width:2px;border-radius:10px;padding:8px 4px;gap:6px}
   .solved .sum{font-size:15px}
@@ -163,6 +191,11 @@
 </main>
 
 <main id="answer"><div id="solved" class="solved"></div></main>
+<div id="reward" hidden>
+  <div class="rays"></div>
+  <div class="gift"><span class="emoji"></span><span class="name"></span></div>
+  <svg class="bigchest" viewBox="-2 -10 28 33" aria-hidden="true"></svg>
+</div>
 
 <script>
 /* ======== tuning ======== */
@@ -176,6 +209,15 @@ const SAME_DIR_WEIGHT = 0.35;               // how likely the next arrow repeats
 const BACK_DIR_WEIGHT = 0.6;                // how likely it points straight back
 const MIN_TREASURE_DIST = 3;                // squares (across + down) between the start and the treasure
 const PUBLIC_URL = 'https://tb-x.github.io/treasure-map/';   // where the QR points when the maker isn't on GitHub Pages
+const REWARDS = [                           // answer page: what pops out of the chest, a different one each time it's opened
+  ['👑', 'A golden crown!'], ['💎', 'A giant diamond!'], ['🪙', 'Pirate gold!'], ['🦖', 'A baby T. rex!'],
+  ['🦄', 'A unicorn!'], ['🐉', 'A friendly dragon!'], ['🚀', 'A real rocket!'], ['🦜', 'A pirate parrot!'],
+  ['🍦', 'A giant ice cream!'], ['🧁', 'A magic cupcake!'], ['🏆', 'A champion cup!'], ['🪄', 'A magic wand!'],
+  ['🧸', 'A cuddly teddy!'], ['🐙', 'A tickly octopus!'], ['🎈', 'Lots of balloons!'], ['🐢', 'A sea turtle friend!'],
+  ['🍕', 'A whole pizza!'], ['🔮', 'A crystal ball!'], ['🐱', 'A pirate kitten!'], ['🧦', 'One smelly sock!'],
+];
+const BITS = ['🪙', '✨', '⭐', '💎'];       // what bursts out around it
+const CHEST_SHAKE_MS = 500;                 // the chest rattles this long before it opens
 const ARROW_GAP = 5.2;                      // answer page: how far short of the treasure's centre the line's arrowhead stops (a square is 10)
 
 /* ======== small helpers ======== */
@@ -189,10 +231,11 @@ const MINUS = '−';
 const cellName = ([x, y]) => LETTERS[x] + (y + 1);
 
 const arrowSvg = (d) => `<svg class="arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5 22.5 12H16v10.5H8V12H1.5z" transform="rotate(${ROT[d]} 12 12)"/></svg>`;
-const CHEST = `<path d="M2 11V8.5Q2 3 12 3T22 8.5V11z" fill="#c07a3a" stroke="#5b3413" stroke-width="1.2" stroke-linejoin="round"/>
-  <rect x="2" y="10" width="20" height="11" rx="1.5" fill="#a0612b" stroke="#5b3413" stroke-width="1.2"/>
+const CHEST_LID = `<path d="M2 11V8.5Q2 3 12 3T22 8.5V11z" fill="#c07a3a" stroke="#5b3413" stroke-width="1.2" stroke-linejoin="round"/>`;
+const CHEST_BODY = `<rect x="2" y="10" width="20" height="11" rx="1.5" fill="#a0612b" stroke="#5b3413" stroke-width="1.2"/>
   <rect x="2" y="10" width="20" height="2.4" fill="#f2b632" stroke="#5b3413" stroke-width=".8"/>
   <rect x="10" y="9" width="4" height="5.5" rx="1" fill="#f2b632" stroke="#5b3413" stroke-width=".8"/>`;
+const CHEST = CHEST_LID + CHEST_BODY;
 const chestSvg = (cls) => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${CHEST}</svg>`;
 
 /* ======== settings (remembered per browser) ======== */
@@ -431,15 +474,88 @@ function showAnswer(r) {
   const turns = pts.slice(1, -1).map(([a, b], i) => `<g class="no" transform="translate(${a} ${b})"><circle r="2.7"/><text>${i + 1}</text></g>`).join('');
   const extra = `<defs><marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.4" markerHeight="3.4" orient="auto">
       <path class="head" d="M0 0 10 5 0 10z"/></marker></defs>
-    <rect class="spot" x="${M + ex * 10 + .6}" y="${M + ey * 10 + .6}" width="8.8" height="8.8" rx="1.5"/>
-    <g transform="translate(${cx(ex) - 4.2} ${cx(ey) - 4.4}) scale(${8.4 / 24})">${CHEST}</g>
+    <g class="treasure"><rect class="spot" x="${M + ex * 10 + .6}" y="${M + ey * 10 + .6}" width="8.8" height="8.8" rx="1.5"/>
+      <g transform="translate(${cx(ex) - 4.2} ${cx(ey) - 4.4}) scale(${8.4 / 24})">${CHEST}</g></g>
     <polyline class="path" points="${line}" marker-end="url(#head)"/>${turns}`;
   $('solved').innerHTML = `${boardSvg(r.n, r.start, 'board', extra)}
     <div class="side">
-      <div class="found">${chestSvg('')}<span>${cellName(r.end)}</span></div>
+      <button class="found" type="button" aria-label="Open the treasure chest">${chestSvg('')}<span>${cellName(r.end)}</span></button>
       <ol class="steps">${r.steps.map((st, i) => stepCard(st, r.sums && r.sums[i], st.k, i + 1)).join('')}</ol>
       <a id="make" href="./">Make new maps</a>
     </div>`;
+  document.querySelector('.bigchest').innerHTML = `<rect x="3.2" y="8" width="17.6" height="3" rx=".5" fill="#2e1606"/><g class="lid">${CHEST_LID}</g>${CHEST_BODY}`;
+  $('solved').addEventListener('click', (e) => { if (e.target.closest('.found, .treasure')) openChest(); });
+  $('reward').addEventListener('click', closeChest);
+}
+
+/* ======== reward chest ======== */
+let lastReward = -1, chestBusy = false, ac = null;
+
+function openChest() {
+  if (chestBusy) return;
+  chestBusy = true;
+  let i;
+  do i = Math.floor(Math.random() * REWARDS.length); while (i === lastReward && REWARDS.length > 1);
+  lastReward = i;
+  const box = $('reward');
+  box.querySelector('.emoji').textContent = REWARDS[i][0];
+  box.querySelector('.name').textContent = REWARDS[i][1];
+  for (const b of box.querySelectorAll('.bit')) b.remove();
+  box.className = '';
+  box.hidden = false;
+  void box.offsetWidth;   // restart the animations when opened again
+  box.classList.add('shake');
+  rattle();
+  setTimeout(() => {
+    box.classList.add('open');
+    tada();
+    burst(box);
+    setTimeout(() => { chestBusy = false; }, 700);   // so a quick second tap can't close it straight away
+  }, CHEST_SHAKE_MS);
+}
+
+function closeChest() { if (!chestBusy) $('reward').hidden = true; }
+
+function burst(box) {
+  for (let i = 0; i < 26; i++) {
+    const b = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 22 + Math.random() * 30;
+    b.className = 'bit';
+    b.textContent = BITS[i % BITS.length];
+    b.style.setProperty('--dx', `${(Math.cos(a) * d).toFixed(1)}vmin`);
+    b.style.setProperty('--dy', `${(Math.sin(a) * d - 12).toFixed(1)}vmin`);
+    b.style.setProperty('--r', `${Math.round(Math.random() * 720 - 360)}deg`);
+    b.style.animationDelay = `${Math.round(Math.random() * 150)}ms`;
+    box.append(b);
+  }
+}
+
+// synthesized sounds: a wooden rattle, then a fanfare with a sparkle on top
+function audio() {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+  } catch { ac = null; }
+  return ac;
+}
+function tone(f, at, dur, type, vol) {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(vol, at + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g).connect(ac.destination);
+  o.start(at); o.stop(at + dur + 0.05);
+}
+function rattle() {
+  if (!audio()) return;
+  const t = ac.currentTime;
+  for (let i = 0; i < 5; i++) tone(150 + (i % 2) * 40, t + i * 0.09, 0.06, 'square', 0.07);
+}
+function tada() {
+  if (!ac) return;
+  const t = ac.currentTime;
+  [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.09, i === 3 ? 0.7 : 0.18, 'triangle', 0.2));
+  [1568, 2093, 2637, 3136].forEach((f, i) => tone(f, t + 0.45 + i * 0.07, 0.3, 'sine', 0.06));
 }
 
 /* ======== start ======== */

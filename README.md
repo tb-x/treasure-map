@@ -18,6 +18,10 @@ Live at **https://tb-x.github.io/treasure-map/**
 - Scan the QR code next to the chest. The answer page shows the same board and cards, solved: every box
   filled in, and a red line from the start along each move to an arrowhead pointing at the treasure. The end
   of each move is marked with the card's number, so a path that doubles back can still be followed.
+- Tap the treasure chest (the wiggling one under the board, or the one on the board). It opens full screen,
+  rattles, flips its lid with a fanfare and a burst of coins and stars, and a surprise pops out: a golden
+  crown, a baby T. rex, a pirate parrot, one smelly sock… Tap anywhere to close it; every opening picks a
+  different surprise.
 
 Every move stays on the board and goes at least one square. The path can cross itself and can double back,
 but never just undoes the move before.
@@ -70,4 +74,7 @@ Named constants at the top of the script in `index.html`:
 | `BACK_DIR_WEIGHT` | 0.6 | How likely an arrow points straight back |
 | `MIN_TREASURE_DIST` | 3 | Squares between the start and the treasure, at least |
 | `PUBLIC_URL` | `https://tb-x.github.io/treasure-map/` | Where the QR codes point |
+| `REWARDS` | 20 surprises | Answer page: what can pop out of the chest (an emoji and a short name each) |
+| `BITS` | 🪙 ✨ ⭐ 💎 | What bursts out around the surprise |
+| `CHEST_SHAKE_MS` | 500 | How long the chest rattles before it opens |
 | `ARROW_GAP` | 5.2 | Answer page: how far before the treasure's centre the line's arrowhead stops (a square is 10) |
