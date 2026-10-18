@@ -166,7 +166,7 @@
   @keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
   @media (prefers-reduced-motion: reduce){ .found svg,#reward.open .rays{animation:none} }
   .solved .steps{width:100%;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
-  .solved .step{border-width:2px;border-radius:10px;padding:8px 4px;gap:6px}
+  .solved .step{border-width:2px;border-radius:10px;padding:16px 4px 8px;gap:6px}     /* top padding keeps the sum clear of the number badge */
   .solved .sum{font-size:15px}
   .solved .sum.long{font-size:12px}
   .solved .sum.xlong{font-size:11px}
