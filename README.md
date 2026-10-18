@@ -12,7 +12,9 @@ Live at **https://tb-x.github.io/treasure-map/**
 
 - Print a sheet (one riddle per A4 page). Each sheet is a different riddle.
 - Start on the green dot.
-- Take the cards in reading order: left to right, then the next row.
+- Take the cards in order. They're numbered, and a dotted trail strings them together: it starts at a
+  green dot like the one on the board, runs from card to card along each row, drops down and back to the
+  start of the next row, and ends at a little chest after the last card.
 - Solve the sum on the card, write the answer in the empty box, and move that many squares the way the arrow points.
 - When the cards run out, the square you're on hides the treasure. Mark it, or say its letter and number (like F3).
 - Scan the QR code next to the chest. The answer page shows the same board and cards, solved: every box
@@ -32,8 +34,9 @@ but never just undoes the move before.
 - **Moves**: 3 to 16 arrow cards. With 8 or fewer the cards print bigger.
 - **Biggest number**: no number in a sum, and no running total along the way, goes above this (5 to 50).
   A single move is never longer than the board allows, so on a 10×10 board every answer is 1 to 9.
-- **Longer sums**: Never, Sometimes (about 1 in 4) or Often (about 1 in 2) a sum has 3 or 4 numbers,
-  like 5 + 4 − 3 + 1.
+- **Numbers in a sum**: tick which lengths to use: 2 numbers (5 − 3), 3 (7 + 8 − 11) and/or 4
+  (5 + 4 − 3 + 1). Each sum picks one of the ticked lengths, all equally often; at least one stays ticked.
+  All three are ticked to start with.
 - **Start corner**: a fixed corner, or any corner.
 - **Sheets**: how many different riddles to print at once (up to 20).
 - **New maps** makes new riddles for all sheets, ↻ on a sheet makes a new one for that sheet only, and
@@ -65,11 +68,12 @@ Named constants at the top of the script in `index.html`:
 
 | Constant | Default | What it does |
 | --- | --- | --- |
-| `DEFAULTS` | 10×10, 8 moves, numbers to 20, longer sums sometimes, any corner, 1 sheet | Starting settings |
+| `DEFAULTS` | 10×10, 8 moves, numbers to 20, sums of 2, 3 and 4 numbers, any corner, 1 sheet | Starting settings |
 | `SIZE_MIN` / `SIZE_MAX` | 5 / 15 | Allowed board sizes |
 | `MOVES_MIN` / `MOVES_MAX` | 3 / 16 | Allowed number of arrow cards (16 is what fits on A4) |
 | `MAXNUM_MIN` / `MAXNUM_MAX` | 5 / 50 | Allowed range for the biggest number |
-| `LONG_CHANCE` | 0, 0.25, 0.5 | Share of 3- and 4-number sums for Never / Sometimes / Often |
+| `LENGTHS` | 2, 3, 4 | The sum lengths offered under "Numbers in a sum" |
+| `COLS` | 4 | Cards per printed row (the dotted trail is drawn for 4) |
 | `SAME_DIR_WEIGHT` | 0.35 | How likely an arrow repeats the one before (1 = as likely as turning) |
 | `BACK_DIR_WEIGHT` | 0.6 | How likely an arrow points straight back |
 | `MIN_TREASURE_DIST` | 3 | Squares between the start and the treasure, at least |

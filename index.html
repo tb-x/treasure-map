@@ -19,7 +19,7 @@
 <style>
   /* Layout: maker mode is a settings card above a column of A4 sheet previews (each prints as one wordless page: board, arrow-and-sum cards, answer QR); answer mode (the QR's #n=…&m=… link) is the same sheet solved: the path drawn to the treasure, every box filled in, the cards below the board or beside it on wide screens; tapping a chest opens a full-screen reward. */
   :root{
-    --ink:#1f2a44; --sea:#2b6f8f; --sand:#f6ecd2; --sand-dark:#e3cf9f; --brown:#8a6a3a;
+    --ink:#1f2a44; --sea:#2b6f8f; --sand:#f6ecd2; --sand-dark:#e3cf9f; --brown:#8a6a3a; --trail:#7d879c;
     --go:#2fa34a; --gold:#f2b632; --red:#e0533d;
     --read:Verdana,Tahoma,sans-serif;
     --title:'Luckiest Guy','Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif;
@@ -49,10 +49,17 @@
     text-shadow:0 3px 0 rgba(0,0,0,.25)}
   header p{margin:6px 0 0;font-size:14px;line-height:1.45;opacity:.92}
   #controls{margin:16px 0 22px;background:var(--sand);border-radius:16px;padding:14px;box-shadow:0 4px 0 rgba(0,0,0,.2);
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:12px 14px}
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:12px 14px}
   #controls label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:bold}
   #controls input,#controls select{height:44px;width:100%;border:2px solid var(--sand-dark);border-radius:10px;background:#fff;
     padding:0 10px;font-size:16px}
+  #controls .lens{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:bold}
+  #controls .chips{display:flex;gap:6px}
+  #controls .chips label{flex:1;position:relative}
+  #controls .chips input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+  #controls .chips span{display:grid;place-items:center;height:44px;border:2px solid var(--sand-dark);border-radius:10px;background:#fff;font-size:16px}
+  #controls .chips input:checked+span{background:var(--sea);border-color:var(--sea);color:#fff}
+  #controls .chips input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
   .btns{grid-column:1/-1;display:flex;gap:10px}
   .btns button{flex:1;height:54px;border:0;border-radius:14px;color:#fff;font-family:var(--title);font-size:24px;letter-spacing:1px;
     padding-top:4px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
@@ -83,14 +90,34 @@
   .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3mm}
   .step{border:.5mm solid var(--ink);border-radius:3mm;padding:2mm;display:flex;flex-direction:column;align-items:center;gap:2mm}
   .step .sum{font-size:13pt;font-weight:bold;white-space:nowrap}
-  .step .sum.long{font-size:11pt}
+  .step .sum.long{font-size:10.5pt}
+  .step .sum.xlong{font-size:9pt}
   .step .row{display:flex;align-items:center;gap:3mm}
   .step .arr{width:11mm;height:11mm;fill:var(--ink)}
   .step .box{width:11mm;height:11mm;border:.5mm solid var(--ink);border-radius:2mm}
   .steps.big .step{padding:3mm 2mm}                  /* up to 8 moves: two rows, so there's room for bigger cards */
-  .steps.big .sum{font-size:15pt}
-  .steps.big .sum.long{font-size:11pt}
+  .steps.big .sum{font-size:14pt}
+  .steps.big .sum.long{font-size:10.5pt}
+  .steps.big .sum.xlong{font-size:9pt}
   .steps.big .arr,.steps.big .box{width:15mm;height:15mm}
+  .sheet.tight .board{width:142mm;height:142mm}        /* 13+ moves: four rows of cards, so the board gives a little room */
+
+  /* the order to follow: numbered cards on a dotted trail from a start dot (like the board's) to the chest */
+  .sheet .steps{column-gap:4mm;row-gap:7mm}
+  .sheet .step{position:relative;background:#fff;padding-top:3.6mm}      /* the sum sits below the number badge */
+  .sheet .step .no{position:absolute;top:-2.8mm;left:-2.8mm;width:6.4mm;height:6.4mm;border-radius:50%;background:var(--ink);color:#fff;
+    font:bold 9pt/6.4mm Verdana,Tahoma,sans-serif;text-align:center}
+  .sheet .step::after,.sheet .step.first::before,.sheet .step.bol::before{content:'';position:absolute;box-sizing:border-box;
+    border:0 dotted var(--trail)}
+  .sheet .step.next::after{left:100%;top:50%;width:5mm;border-top-width:.8mm}
+  .sheet .step.last::after{left:100%;top:50%;width:3mm;border-top-width:.8mm}
+  .sheet .step.first::before{right:100%;top:50%;width:3mm;border-top-width:.8mm}
+  .sheet .step.eol::after{left:50%;top:100%;height:4mm;border-left-width:.8mm}
+  .sheet .step.bol::before{left:50%;bottom:100%;height:4mm;width:calc(300% + 15mm);border-top-width:.8mm;border-left-width:.8mm}
+  .sheet .start,.sheet .end{position:absolute;top:50%;transform:translateY(-50%)}
+  .sheet .start{right:calc(100% + 3mm);width:7mm;height:7mm}
+  .sheet .end{left:calc(100% + 3mm);width:8mm;height:8mm}
+  .sheet .start svg,.sheet .end svg{width:100%;height:100%;display:block}
 
   /* ---------- answer ---------- */
   #answer{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
@@ -142,6 +169,7 @@
   .solved .step{border-width:2px;border-radius:10px;padding:8px 4px;gap:6px}
   .solved .sum{font-size:15px}
   .solved .sum.long{font-size:12px}
+  .solved .sum.xlong{font-size:11px}
   .solved .arr,.solved .box{width:36px;height:36px}
   .solved .box{border-width:2px;border-radius:6px;display:grid;place-items:center;font:bold 22px Verdana,Tahoma,sans-serif;color:var(--red)}
   #make{color:var(--sea);font-size:13px}
@@ -178,9 +206,13 @@
     <label>Board size <input id="size" type="number" inputmode="numeric"></label>
     <label>Moves <input id="moves" type="number" inputmode="numeric"></label>
     <label>Biggest number <input id="maxNum" type="number" inputmode="numeric"></label>
-    <label>Longer sums
-      <select id="longer"><option value="never">Never</option><option value="sometimes">Sometimes</option><option value="often">Often</option></select>
-    </label>
+    <div class="lens" role="group" aria-labelledby="lens-label"><span id="lens-label">Numbers in a sum</span>
+      <span class="chips" id="lengths">
+        <label title="like 5 − 3"><input type="checkbox" value="2"><span>2</span></label>
+        <label title="like 7 + 8 − 11"><input type="checkbox" value="3"><span>3</span></label>
+        <label title="like 5 + 4 − 3 + 1"><input type="checkbox" value="4"><span>4</span></label>
+      </span>
+    </div>
     <label>Start corner
       <select id="corner"><option value="random">Any corner</option><option value="bl">Bottom left</option><option value="br">Bottom right</option><option value="tl">Top left</option><option value="tr">Top right</option></select>
     </label>
@@ -199,12 +231,13 @@
 
 <script>
 /* ======== tuning ======== */
-const DEFAULTS = { size: 10, moves: 8, maxNum: 20, longer: 'sometimes', corner: 'random', sheets: 1 };
+const DEFAULTS = { size: 10, moves: 8, maxNum: 20, lengths: [2, 3, 4], corner: 'random', sheets: 1 };
 const SIZE_MIN = 5, SIZE_MAX = 15;          // board is size × size squares
 const MOVES_MIN = 3, MOVES_MAX = 16;        // 16 cards still fit under the board on A4
 const MAXNUM_MIN = 5, MAXNUM_MAX = 50;      // biggest number in a sum, and in every partial result
 const SHEETS_MAX = 20;
-const LONG_CHANCE = { never: 0, sometimes: 0.25, often: 0.5 };   // share of sums with 3 or 4 numbers
+const LENGTHS = [2, 3, 4];                  // how many numbers a sum can have; each sum picks one of the ticked ones, equally often
+const COLS = 4;                             // cards per printed row (the dotted trail's CSS assumes 4)
 const SAME_DIR_WEIGHT = 0.35;               // how likely the next arrow repeats the last one (1 = as likely as a turn)
 const BACK_DIR_WEIGHT = 0.6;                // how likely it points straight back
 const MIN_TREASURE_DIST = 3;                // squares (across + down) between the start and the treasure
@@ -242,6 +275,9 @@ const chestSvg = (cls) => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="
 const KEY = 'treasuremap.settings';
 let settings = { ...DEFAULTS };
 try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY)) || {}); } catch { /* blocked on file:// */ }
+const cleanLengths = (a) => { const l = LENGTHS.filter((n) => Array.isArray(a) && a.includes(n)); return l.length ? l : DEFAULTS.lengths.slice(); };
+settings.lengths = cleanLengths(settings.lengths);
+delete settings.longer;   // the old Never / Sometimes / Often setting
 const saveSettings = () => { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* ignore */ } };
 const clamp = (v, a, b, d) => (Number.isFinite(+v) && v !== '' ? Math.min(b, Math.max(a, Math.round(+v))) : d);
 
@@ -287,9 +323,8 @@ function shortSum(v, max) {
   if (canSub && (!canAdd || Math.random() < 0.55)) { const a = rint(v + 1, max); return [a, -(a - v)]; }
   const a = rint(1, v - 1); return [a, v - a];
 }
-function longSum(v, max) {
+function longSum(v, max, k) {
   for (let t = 0; t < 60; t++) {
-    const k = Math.random() < 0.6 ? 3 : 4;
     const terms = [rint(1, max)];
     let tot = terms[0];
     for (let i = 1; i < k - 1; i++) {
@@ -303,14 +338,20 @@ function longSum(v, max) {
   }
   return null;
 }
-function makeSum(v, max, longChance) {
-  return (Math.random() < longChance && longSum(v, max)) || shortSum(v, max);
+// pick one of the allowed lengths at random; if no sum of that length fits, try the others
+function makeSum(v, max, lengths) {
+  const first = lengths[rint(0, lengths.length - 1)];
+  for (const k of [first, ...lengths.filter((x) => x !== first)]) {
+    const terms = k === 2 ? shortSum(v, max) : longSum(v, max, k);
+    if (terms) return terms;
+  }
+  return shortSum(v, max);
 }
 const sumText = (terms) => terms.map((t, i) => (i ? (t < 0 ? ` ${MINUS} ` : ' + ') + Math.abs(t) : String(t))).join('');
 
 function makeRiddle(s) {
   const path = makePath(s.size, s.corner, s.moves, Math.min(s.size - 1, s.maxNum));
-  path.sums = path.steps.map((st) => makeSum(st.k, s.maxNum, LONG_CHANCE[s.longer]));
+  path.sums = path.steps.map((st) => makeSum(st.k, s.maxNum, s.lengths));
   return path;
 }
 
@@ -386,17 +427,28 @@ function boardSvg(n, start, cls, extra = '') {
 /* ======== maker: sheets ======== */
 let riddles = [];
 
-// one arrow card; the answer page fills the box in
-function stepCard(st, terms, answer = '', no = '') {
+// one arrow card with its number; the answer page fills the box in
+function stepCard(st, terms, { answer = '', no = '', cls = '', extra = '' } = {}) {
   const t = terms ? sumText(terms) + ' =' : '';
-  return `<li class="step">${no ? `<span class="no">${no}</span>` : ''}${t ? `<span class="sum${t.length > 14 ? ' long' : ''}">${t}</span>` : ''}
+  return `<li class="step ${cls}">${extra}${no ? `<span class="no">${no}</span>` : ''}${t ? `<span class="sum${t.length > 17 ? ' long xlong' : t.length > 14 ? ' long' : ''}">${t}</span>` : ''}
     <span class="row">${arrowSvg(st.d)}<span class="box">${answer}</span></span></li>`;
 }
 
+const START_DOT = '<svg viewBox="-5 -5 10 10"><circle r="4.6" fill="#2fa34a"/><path d="M-1.6-2.7 3 0-1.6 2.7z" fill="#fff"/></svg>';
+
+// the printed cards are numbered and strung on a dotted trail: from a green dot like the board's start, card to
+// card along each row, down and back to the next row, and on to a chest after the last card
 function sheetHtml(r) {
-  const cards = r.steps.map((st, i) => stepCard(st, r.sums[i])).join('');
+  const n = r.steps.length;
+  const cards = r.steps.map((st, i) => {
+    const last = i === n - 1;
+    const cls = [i === 0 ? 'first' : '', last ? 'last' : i % COLS === COLS - 1 ? 'eol' : 'next', i > 0 && i % COLS === 0 ? 'bol' : '']
+      .filter(Boolean).join(' ');
+    const extra = (i === 0 ? `<span class="start">${START_DOT}</span>` : '') + (last ? `<span class="end">${chestSvg('')}</span>` : '');
+    return stepCard(st, r.sums[i], { no: i + 1, cls, extra });
+  }).join('');
   const hash = riddleHash(r);
-  return `<div class="sheet">
+  return `<div class="sheet${Math.ceil(n / COLS) >= 4 ? ' tight' : ''}">
     <div class="top">${boardSvg(r.n, r.start, 'board')}
       <a class="key" href="${hash}" target="_blank" title="Answer: ${cellName(r.end)}">${chestSvg('chest')}${qrSvg(answerBase() + hash)}</a>
     </div>
@@ -421,7 +473,7 @@ function readControls() {
     size: clamp($('size').value, SIZE_MIN, SIZE_MAX, DEFAULTS.size),
     moves: clamp($('moves').value, MOVES_MIN, MOVES_MAX, DEFAULTS.moves),
     maxNum: clamp($('maxNum').value, MAXNUM_MIN, MAXNUM_MAX, DEFAULTS.maxNum),
-    longer: $('longer').value in LONG_CHANCE ? $('longer').value : DEFAULTS.longer,
+    lengths: cleanLengths([...document.querySelectorAll('#lengths input:checked')].map((c) => +c.value)),
     corner: $('corner').value,
     sheets: clamp($('sheets').value, 1, SHEETS_MAX, DEFAULTS.sheets),
   };
@@ -429,7 +481,8 @@ function readControls() {
   saveSettings();
 }
 function writeControls() {
-  for (const k of ['size', 'moves', 'maxNum', 'longer', 'corner', 'sheets']) $(k).value = settings[k];
+  for (const k of ['size', 'moves', 'maxNum', 'corner', 'sheets']) $(k).value = settings[k];
+  for (const c of document.querySelectorAll('#lengths input')) c.checked = settings.lengths.includes(+c.value);
   $('size').min = SIZE_MIN; $('size').max = SIZE_MAX;
   $('moves').min = MOVES_MIN; $('moves').max = MOVES_MAX;
   $('maxNum').min = MAXNUM_MIN; $('maxNum').max = MAXNUM_MAX;
@@ -440,7 +493,13 @@ function newAll() { riddles = Array.from({ length: settings.sheets }, () => make
 
 function startMaker() {
   writeControls();
-  for (const k of ['size', 'moves', 'maxNum', 'longer', 'corner']) $(k).addEventListener('change', () => { readControls(); newAll(); });
+  for (const k of ['size', 'moves', 'maxNum', 'corner']) $(k).addEventListener('change', () => { readControls(); newAll(); });
+  for (const c of document.querySelectorAll('#lengths input')) {
+    c.addEventListener('change', () => {
+      if (!document.querySelector('#lengths input:checked')) c.checked = true;   // at least one length stays ticked
+      readControls(); newAll();
+    });
+  }
   $('sheets').addEventListener('change', () => {   // keep the maps already made, add or drop at the end
     readControls();
     riddles = riddles.slice(0, settings.sheets);
@@ -480,7 +539,7 @@ function showAnswer(r) {
   $('solved').innerHTML = `${boardSvg(r.n, r.start, 'board', extra)}
     <div class="side">
       <button class="found" type="button" aria-label="Open the treasure chest">${chestSvg('')}<span>${cellName(r.end)}</span></button>
-      <ol class="steps">${r.steps.map((st, i) => stepCard(st, r.sums && r.sums[i], st.k, i + 1)).join('')}</ol>
+      <ol class="steps">${r.steps.map((st, i) => stepCard(st, r.sums && r.sums[i], { answer: st.k, no: i + 1 })).join('')}</ol>
       <a id="make" href="./">Make new maps</a>
     </div>`;
   document.querySelector('.bigchest').innerHTML = `<rect x="3.2" y="8" width="17.6" height="3" rx=".5" fill="#2e1606"/><g class="lid">${CHEST_LID}</g>${CHEST_BODY}`;
