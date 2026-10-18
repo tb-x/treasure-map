@@ -240,6 +240,9 @@ const LENGTHS = [2, 3, 4];                  // how many numbers a sum can have; 
 const COLS = 4;                             // cards per printed row (the dotted trail's CSS assumes 4)
 const SAME_DIR_WEIGHT = 0.35;               // how likely the next arrow repeats the last one (1 = as likely as a turn)
 const BACK_DIR_WEIGHT = 0.6;                // how likely it points straight back
+const OVERLAP_WEIGHT = 0.05;                // each square a move would run back along the line already drawn multiplies its chance by this
+const REVISIT_WEIGHT = 0.25;                // a move that stops where an earlier one stopped has its chance multiplied by this
+const PATH_TRIES = 12;                      // paths tried per map; the one that overlaps itself least is kept
 const MIN_TREASURE_DIST = 3;                // squares (across + down) between the start and the treasure
 const PUBLIC_URL = 'https://tb-x.github.io/treasure-map/';   // where the QR points when the maker isn't on GitHub Pages
 const REWARDS = [                           // answer page: what pops out of the chest, a different one each time it's opened
@@ -287,32 +290,59 @@ function cornerXY(corner, n) {
   return [c[1] === 'l' ? 0 : n - 1, c[0] === 't' ? 0 : n - 1];
 }
 
+// try a few paths and keep the one whose answer line overlaps itself least
 function makePath(n, corner, moves, maxStep) {
-  for (let tries = 0; tries < 1000; tries++) {
+  let best = null;
+  for (let t = 0; t < PATH_TRIES && !(best && best.cost === 0); t++) {
+    const p = walkPath(n, corner, moves, maxStep);
+    if (p && (!best || p.cost < best.cost)) best = p;
+  }
+  return best;
+}
+
+// one random path; every move is weighed against the line drawn so far, so running back along it, or stopping
+// where an earlier move stopped (the answer page's numbered dots would sit on top of each other), is rare
+function walkPath(n, corner, moves, maxStep) {
+  const edge = (ax, ay, bx, by) => (ax + ay < bx + by ? `${ax},${ay},${bx},${by}` : `${bx},${by},${ax},${ay}`);
+  for (let tries = 0; tries < 200; tries++) {
     const start = cornerXY(corner, n);
-    let [x, y] = start, prev = null, ok = true;
-    const steps = [];
-    for (let i = 0; i < moves && ok; i++) {
+    const edges = new Set(), stops = new Set([String(start)]), steps = [];
+    let [x, y] = start, prev = null, cost = 0;
+    for (let i = 0; i < moves; i++) {
       const opts = [];
       for (const d of 'UDLR') {
         const room = d === 'U' ? y : d === 'D' ? n - 1 - y : d === 'L' ? x : n - 1 - x;
         const lim = Math.min(room, maxStep);
         if (lim < 1) continue;
-        const w = !prev ? 1 : d === prev.d ? SAME_DIR_WEIGHT : d === BACK[prev.d] ? BACK_DIR_WEIGHT : 1;
-        opts.push({ d, lim, w });
+        const dirW = !prev ? 1 : d === prev.d ? SAME_DIR_WEIGHT : d === BACK[prev.d] ? BACK_DIR_WEIGHT : 1;
+        for (let k = 1; k <= lim; k++) {
+          if (prev && d === BACK[prev.d] && k === prev.k) continue;   // don't just undo the last move
+          let shared = 0, px = x, py = y;
+          for (let c = 0; c < k; c++) {
+            const nx = px + DIRS[d][0], ny = py + DIRS[d][1];
+            if (edges.has(edge(px, py, nx, ny))) shared++;
+            px = nx; py = ny;
+          }
+          const revisit = stops.has(`${px},${py}`) ? 1 : 0;
+          opts.push({ d, k, shared, revisit, w: (dirW / lim) * OVERLAP_WEIGHT ** shared * REVISIT_WEIGHT ** revisit });
+        }
       }
-      let r = Math.random() * opts.reduce((s, o) => s + o.w, 0), o = opts[0];
+      if (!opts.length) break;
+      let r = Math.random() * opts.reduce((sum, o) => sum + o.w, 0), o = opts[opts.length - 1];
       for (const c of opts) { if ((r -= c.w) < 0) { o = c; break; } }
-      let k = rint(1, o.lim);
-      if (prev && o.d === BACK[prev.d] && k === prev.k) {   // don't just undo the last move
-        if (o.lim === 1) { ok = false; break; }
-        k = k === o.lim ? k - 1 : k + 1;
+      for (let c = 0; c < o.k; c++) {
+        const nx = x + DIRS[o.d][0], ny = y + DIRS[o.d][1];
+        edges.add(edge(x, y, nx, ny));
+        x = nx; y = ny;
       }
-      x += DIRS[o.d][0] * k; y += DIRS[o.d][1] * k;
-      prev = { d: o.d, k };
+      stops.add(`${x},${y}`);
+      cost += o.shared + o.revisit;
+      prev = { d: o.d, k: o.k };
       steps.push(prev);
     }
-    if (ok && Math.abs(x - start[0]) + Math.abs(y - start[1]) >= MIN_TREASURE_DIST) return { n, start, steps, end: [x, y] };
+    if (steps.length === moves && Math.abs(x - start[0]) + Math.abs(y - start[1]) >= MIN_TREASURE_DIST) {
+      return { n, start, steps, end: [x, y], cost };
+    }
   }
   return null;
 }
@@ -545,6 +575,17 @@ function showAnswer(r) {
   document.querySelector('.bigchest').innerHTML = `<rect x="3.2" y="8" width="17.6" height="3" rx=".5" fill="#2e1606"/><g class="lid">${CHEST_LID}</g>${CHEST_BODY}`;
   $('solved').addEventListener('click', (e) => { if (e.target.closest('.found, .treasure')) openChest(); });
   $('reward').addEventListener('click', closeChest);
+  fitSums();
+  addEventListener('resize', fitSums);
+}
+
+// shrink any sum that's wider than its card (long 4-number sums on narrow cards)
+function fitSums() {
+  for (const s of document.querySelectorAll('.solved .sum')) {
+    s.style.fontSize = '';
+    const room = s.parentElement.clientWidth - 8;
+    for (let f = parseFloat(getComputedStyle(s).fontSize); s.offsetWidth > room && f > 8; f -= 0.5) s.style.fontSize = `${f - 0.5}px`;
+  }
 }
 
 /* ======== reward chest ======== */

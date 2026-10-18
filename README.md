@@ -25,8 +25,10 @@ Live at **https://tb-x.github.io/treasure-map/**
   crown, a baby T. rex, a pirate parrot, one smelly sock… Tap anywhere to close it; every opening picks a
   different surprise.
 
-Every move stays on the board and goes at least one square. The path can cross itself and can double back,
-but never just undoes the move before.
+Every move stays on the board and goes at least one square. The path can cross itself, but it avoids running
+back along a line it already drew or stopping where an earlier move stopped, so the answer page's line stays
+easy to follow. (On a small board with lots of moves that isn't always possible, and it then overlaps as
+little as it can.) It never just undoes the move before.
 
 ## The maker page
 
@@ -76,6 +78,9 @@ Named constants at the top of the script in `index.html`:
 | `COLS` | 4 | Cards per printed row (the dotted trail is drawn for 4) |
 | `SAME_DIR_WEIGHT` | 0.35 | How likely an arrow repeats the one before (1 = as likely as turning) |
 | `BACK_DIR_WEIGHT` | 0.6 | How likely an arrow points straight back |
+| `OVERLAP_WEIGHT` | 0.05 | Each square a move would run back along the line already drawn multiplies its chance by this |
+| `REVISIT_WEIGHT` | 0.25 | A move that would stop where an earlier one stopped has its chance multiplied by this |
+| `PATH_TRIES` | 12 | Paths tried per map; the one that overlaps itself least is kept |
 | `MIN_TREASURE_DIST` | 3 | Squares between the start and the treasure, at least |
 | `PUBLIC_URL` | `https://tb-x.github.io/treasure-map/` | Where the QR codes point |
 | `REWARDS` | 20 surprises | Answer page: what can pop out of the chest (an emoji and a short name each) |
